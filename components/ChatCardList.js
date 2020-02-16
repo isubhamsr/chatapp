@@ -22,7 +22,7 @@ export default class ChatCardList extends Component {
                         <View>
                             <Card.Content>
                                 <TouchableOpacity>
-                                    <Title onPress={() => this.props.navigation.navigate('Chat')}>{this.props.name}</Title>
+                                    <Title onPress={() => this.props.navigation.navigate('Chat',{name : this.props.name})}>{this.props.name}</Title>
                                 </TouchableOpacity>
                             </Card.Content>
                         </View>

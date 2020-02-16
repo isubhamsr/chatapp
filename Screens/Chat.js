@@ -1,9 +1,13 @@
 import React, { Component } from 'react'
-import { View, Text, Button, StyleSheet, KeyboardAvoidingView, ScrollView } from "react-native"
+import { View, Text, Button, StyleSheet, KeyboardAvoidingView, ScrollView, Platform } from "react-native"
 import io from "socket.io-client"
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler'
+import KeyboardSpacer from "react-native-keyboard-spacer"
+import Messages from './Messages'
 
 export default class Chat extends Component {
+
+    typingTimer = null;
 
     constructor(props) {
         super(props)
@@ -18,7 +22,7 @@ export default class Chat extends Component {
     }
 
     componentDidMount() {
-        this.socket = io("http://b0390ec3.ngrok.io")
+        this.socket = io("http://cc12be03.ngrok.io")
 
         this.socket.on("chatmessages", msg => {
             console.log("Resive msg ", msg);
@@ -47,9 +51,17 @@ export default class Chat extends Component {
             })
         })
 
+        this.socket.on("typingStop",()=>{
+            this.setState({
+                typing: ""
+            })
+        })
 
     }
 
+    componentWillUnmount() {
+        clearTimeout(this.typingTimer);
+    }
 
     sentMessage = () => {
         console.log("click");
@@ -66,7 +78,8 @@ export default class Chat extends Component {
             chat: this.state.chat
         }
 
-        this.socket.emit("msg", data)
+        // this.socket.emit("msg", data)
+        this.socket.emit(this.props.navigation.getParam("name"), data)
 
         console.log(this.state.chat);
 
@@ -97,10 +110,17 @@ export default class Chat extends Component {
             <Text key={Math.random()}>From {name}: Message: {item}</Text>
         ))
 
-        // const keyboardVerticalOffset = Platform.OS === 'ios' ? 40 : 0
+        const messages = [
+            { isOwnMessage: false, message: "Hi" },
+            { isOwnMessage: true, message: "how can I help you" },
+            { isOwnMessage: false, message: "Hi" }
+        ]
+
+        const bubble = messages.map((item, i) => <Messages {...item} key={i} />)
+        // const spacer = Platform.OS === "ios" ? <KeyboardSpacer /> : <KeyboardSpacer />
         return (
 
-            <View style={style.container}>
+            <View style={style.container} >
 
                 <ScrollView>
                     <View >
@@ -112,6 +132,10 @@ export default class Chat extends Component {
 
                         {/* {num} */}
                         {chatMsgs}
+
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        {bubble}
                     </View>
                 </ScrollView>
 
@@ -123,26 +147,20 @@ export default class Chat extends Component {
                         placeholder="Chat"
                         value={this.state.chat}
                         onChangeText={(chat) => {
-
-                            if(chat){
-                                this.socket.emit("typing", "Some One Is typing")
+                            this.socket.emit("typing", "Some One Is typing")
                             this.setState({ chat: chat })
-                            }
-                            else{
-                            let delta = new Date().getTime() - this.state.lastPress;
-                            if (delta < 400) {
-                                this.setState({
-                                    typing: "ok"
-                                })
 
-                            }
-                            this.setState({
-                                lastPress: new Date().getTime()
-                            })
+                            const val = chat;
+                            clearTimeout(this.typingTimer);
+                            this.typingTimer = setTimeout(() => {
+                                if (val) {
+                                    this.socket.emit("typing-stop")
+                                    window.alert('Stopped typing !');
+                                }
+                            }, 5000);
+
 
                         }}
-
-                    }
                     />
 
                     <TouchableOpacity>
@@ -158,7 +176,8 @@ export default class Chat extends Component {
                     /> */}
                 </View>
 
-
+                {/* {spacer} */}
+                <KeyboardSpacer />
             </View>
 
         )
