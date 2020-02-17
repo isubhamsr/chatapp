@@ -15,7 +15,7 @@ export default class ChatList extends Component {
     }
 
     componentDidMount() {
-        this.socket = io("http://cc12be03.ngrok.io")
+        this.socket = io("http://e5c14135.ngrok.io")
 
         this.socket.on("users", data => {
             console.log("users from socket");

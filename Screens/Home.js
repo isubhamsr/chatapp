@@ -3,6 +3,7 @@ import { View, ImageBackground, StyleSheet, TextInput, KeyboardAvoidingView, Scr
 // import { TextInput } from 'react-native-gesture-handler'
 import { Button, Card, Title } from "react-native-paper"
 import KeyboardSpacer from 'react-native-keyboard-spacer'
+import io from "socket.io-client"
 
 export default class Home extends Component {
 
@@ -10,8 +11,32 @@ export default class Home extends Component {
     super(props)
 
     this.state = {
-      name: ""
+      name: "",
+      users : null
     }
+  }
+
+  componentDidMount(){
+    this.socket = io("http://3c2851ed.ngrok.io")
+
+  //   this.socket.on("get-users", data => {
+  //     // data.map(item=>{
+  //     //     console.log(item);
+  //     //     // this.state.users.push(item)
+  //     //     this.setState({
+  //     //         users : [...item]
+  //     //     })
+  //     // })
+  //     this.setState({
+  //         users: data
+  //     })
+  //     console.log("Online Users");
+  //     console.log(this.state.users);
+
+
+  // })
+
+
   }
 
   render() {
@@ -33,8 +58,8 @@ export default class Home extends Component {
               label="Enter Your name"
               placeholder="Enter Name"
               value={this.state.name}
-              onChangeText={(chat) => {
-                this.setState({ name: chat })
+              onChangeText={(name) => {
+                this.setState({ name: name })
               }}
             />
             <View >
@@ -42,7 +67,11 @@ export default class Home extends Component {
                 style={style.buttonInput}
                 mode="contained"
                 title="Go to Chat"
-                onPress={() => this.props.navigation.navigate('Chat', { name: this.state.name })}
+                onPress={() => {
+                  this.socket.emit("new-user",this.state.name)
+                  this.props.navigation.navigate('Chat', { name: this.state.name })
+                }
+                }
               >
                 Go to Chat
           </Button>

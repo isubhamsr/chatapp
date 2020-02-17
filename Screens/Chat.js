@@ -1,9 +1,14 @@
 import React, { Component } from 'react'
-import { View, Text, Button, StyleSheet, KeyboardAvoidingView, ScrollView, Platform } from "react-native"
+import { View, Text, Button, StyleSheet, KeyboardAvoidingView, ScrollView, Platform, Image } from "react-native"
 import io from "socket.io-client"
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler'
 import KeyboardSpacer from "react-native-keyboard-spacer"
 import Messages from './Messages'
+// import ImagePicker from "expo-image-picker"
+import * as ImagePicker from 'expo-image-picker';
+import * as Permissions from 'expo-permissions';
+// import {ImagePicker, Permissions} from "expo"
+
 
 export default class Chat extends Component {
 
@@ -17,12 +22,16 @@ export default class Chat extends Component {
             chatMsgs: [],
             typing: "",
             name: this.props.navigation.getParam("name"),
-            lastPress: 0
+            lastPress: 0,
+            image: null,
+            imageHeight: null,
+            imageWidth: null,
+            users: []
         }
     }
 
     componentDidMount() {
-        this.socket = io("http://cc12be03.ngrok.io")
+        this.socket = io("http://3c2851ed.ngrok.io")
 
         this.socket.on("chatmessages", msg => {
             console.log("Resive msg ", msg);
@@ -51,11 +60,42 @@ export default class Chat extends Component {
             })
         })
 
-        this.socket.on("typingStop",()=>{
+        this.socket.on("typingStop", () => {
             this.setState({
                 typing: ""
             })
         })
+        // this.getPermissionAsync();
+
+        this.socket.on("get-users", data => {
+            // data.map(item=>{
+            //     console.log(item);
+            //     // this.state.users.push(item)
+            //     this.setState({
+            //         users : [...item]
+            //     })
+            // })
+            console.log("GEt Users", data);
+            
+            this.setState({
+                users: data
+            }, () => {
+                console.log("After state change",this.state.users);
+                
+            })
+            console.log("Online Users");
+            console.log(this.state.users);
+
+
+        })
+
+        this.socket.on("sent-image-clint", data=>{
+            this.setState({
+                image : data
+            })
+        })
+
+        // this.forceUpdate()
 
     }
 
@@ -78,8 +118,8 @@ export default class Chat extends Component {
             chat: this.state.chat
         }
 
-        // this.socket.emit("msg", data)
-        this.socket.emit(this.props.navigation.getParam("name"), data)
+        this.socket.emit("msg", data)
+        // this.socket.emit(this.props.navigation.getParam("name"), data)
 
         console.log(this.state.chat);
 
@@ -89,6 +129,39 @@ export default class Chat extends Component {
 
         this.socket.emit("typingOver")
     }
+
+    // getPermissionAsync = async () => {
+    //     if (Constants.platform.ios) {
+    //       const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+    //       if (status !== 'granted') {
+    //         alert('Sorry, we need camera roll permissions to make this work!');
+    //       }
+    //     }
+    //   }
+
+    sendImage = async () => {
+        // ImagePicker.launchImageLibraryAsync()
+
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.All,
+            //   allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1
+        });
+
+        console.log(result);
+
+        if (!result.cancelled) {
+            this.socket.emit("sent-image", result.uri)
+            this.setState({
+                
+                imageHeight: result.height,
+                imageWidth: result.width
+            });
+        }
+    }
+
+
 
     doubleTap = () => {
 
@@ -105,7 +178,11 @@ export default class Chat extends Component {
 
     render() {
         const { navigation } = this.props;
-        const name = navigation.getParam("name")
+        const users = []
+        let name = navigation.getParam("name")
+        users.push(name)
+        // console.log("Users from render",users);
+        
         const chatMsgs = this.state.chatMsgs.map(item => (
             <Text key={Math.random()}>From {name}: Message: {item}</Text>
         ))
@@ -116,6 +193,9 @@ export default class Chat extends Component {
             { isOwnMessage: false, message: "Hi" }
         ]
 
+        // const onlineUsers = 
+       
+
         const bubble = messages.map((item, i) => <Messages {...item} key={i} />)
         // const spacer = Platform.OS === "ios" ? <KeyboardSpacer /> : <KeyboardSpacer />
         return (
@@ -125,13 +205,26 @@ export default class Chat extends Component {
                 <ScrollView>
                     <View >
                         <Text>Chat</Text>
-                        <Text>Name: {name}</Text>
+                        {/* <Text>Online Users:{name}</Text> */}
+                        {
+                            // users.map(item=>(
+                            //     // console.log("Online USer from return",item)
+                            //     <Text key={Math.random()}>Online Users: {item}</Text>
+                            // ))
+                            // console.log("Online USers from return")
+                            // onlineUsers
+                            this.state.users.map((items)=>(
+                            <Text key={Math.random()}>{items}</Text>
+                            ))
+                        }
+
                         <Text>{this.state.typing}</Text>
-                        <Text>{this.state.chat}</Text>
+
 
 
                         {/* {num} */}
                         {chatMsgs}
+                        <Image source={{ uri: this.state.image }} style={{ width: 200, height: 200 }} />
 
                     </View>
                     <View style={{ flex: 1 }}>
@@ -166,6 +259,10 @@ export default class Chat extends Component {
                     <TouchableOpacity>
                         <Text style={style.sendButton}
                             onPress={this.sentMessage}>Send</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity>
+                        <Text style={style.sendButton}
+                            onPress={this.sendImage}>Send Photos</Text>
                     </TouchableOpacity>
 
                     {/* <Button
