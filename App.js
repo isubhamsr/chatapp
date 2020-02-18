@@ -21,21 +21,22 @@ import {Ionicons, Entypo} from "@expo/vector-icons"
 //   }
 // });
 
-const MyTabs = createMaterialTopTabNavigator({
-  Home : ChatList,
-  Status : Home,
-  Call : Chat
-},{
-  tabBarOptions : {
-    style : {
-      backgroundColor : "#047a6c"
-    }
-  }
-}
-)
+// const MyTabs = createMaterialTopTabNavigator({
+//   Home : ChatList,
+//   Status : Home,
+//   // Call : Chat
+// },{
+//   tabBarOptions : {
+//     style : {
+//       backgroundColor : "#047a6c"
+//     }
+//   }
+// }
+// )
 
 const stack = createStackNavigator({
-  Home : MyTabs,
+  Home : Home,
+  ChatList : ChatList,
   Chat : Chat
 },{
   defaultNavigationOptions : {

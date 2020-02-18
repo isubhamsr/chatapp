@@ -7,8 +7,8 @@ import Messages from './Messages'
 // import ImagePicker from "expo-image-picker"
 import * as ImagePicker from 'expo-image-picker';
 import * as Permissions from 'expo-permissions';
-// import {ImagePicker, Permissions} from "expo"
-
+// const base64Img = require('base64-img');
+// const fs = require('fs')
 
 export default class Chat extends Component {
 
@@ -21,7 +21,7 @@ export default class Chat extends Component {
             chat: "",
             chatMsgs: [],
             typing: "",
-            name: this.props.navigation.getParam("name"),
+            name: props.navigation.getParam("name"),
             lastPress: 0,
             image: null,
             imageHeight: null,
@@ -31,7 +31,10 @@ export default class Chat extends Component {
     }
 
     componentDidMount() {
-        this.socket = io("http://3c2851ed.ngrok.io")
+        this.socket = io("http://76210b54.ngrok.io")
+        console.log("User name", this.props.navigation.getParam("name"));
+
+        this.socket.emit("new-user", this.state.name)
 
         this.socket.on("chatmessages", msg => {
             console.log("Resive msg ", msg);
@@ -41,10 +44,10 @@ export default class Chat extends Component {
                 name: msg.name
             })
             console.log(this.state.chatMsgs);
-            this.state.chatMsgs.map(item => {
-                console.log(item);
+            // this.state.chatMsgs.map(item => {
+            //     console.log(item);
 
-            })
+            // })
             // var name = msg.name
         })
 
@@ -65,6 +68,29 @@ export default class Chat extends Component {
                 typing: ""
             })
         })
+
+
+        this.socket.on("base-img", (data) => {
+            console.log("Base Im", typeof (data));
+            this.setState({
+                // image : data
+                chatMsgs : [...this.state.chatMsgs, data]
+            })
+            // Split the base64 string in data and contentType
+            // var block = data.split(";");
+            // // Get the content type of the image
+            // var contentType = block[0].split(":")[1];// In this case "image/gif"
+            // // get the real base64 content of the file
+            // var realData = block[1].split(",")[1];// In this case "R0lGODlhPQBEAPeoAJosM...."
+
+            // // Convert it to a blob to upload
+            // var blob = this.b64toBlob(realData, contentType);
+
+            // console.log("Blob", blob);
+
+
+        })
+
         // this.getPermissionAsync();
 
         this.socket.on("get-users", data => {
@@ -76,12 +102,19 @@ export default class Chat extends Component {
             //     })
             // })
             console.log("GEt Users", data);
-            
+
+            // data.map(item=>{
+            //     this.setState({
+            //         users : [...this.state.users, item]
+            //     })
+            // })
+
+
             this.setState({
                 users: data
             }, () => {
-                console.log("After state change",this.state.users);
-                
+                console.log("After state change", this.state.users);
+
             })
             console.log("Online Users");
             console.log(this.state.users);
@@ -89,14 +122,51 @@ export default class Chat extends Component {
 
         })
 
-        this.socket.on("sent-image-clint", data=>{
-            this.setState({
-                image : data
-            })
-        })
+        // this.socket.on("sent-image-clint", data => {
+        //     this.setState({
+        //         image: data
+        //     })
+        // })
 
         // this.forceUpdate()
+        // this.createBlobImg(this.state.image)
 
+    }
+
+    // createBlobImg = (image) => {
+
+    //     var xhr = new XMLHttpRequest();
+    //     xhr.open("GET", image);
+    //     xhr.responseType = "blob";//force the HTTP response, response-type header to be blob
+    //     xhr.onload = function () {
+    //         blob = xhr.response;//xhr.response is now a blob object
+    //     }
+    // }
+
+    b64toBlob = (b64Data, contentType) => {
+        contentType = contentType || '';
+        let sliceSize = 512;
+
+        var byteCharacters = atob(b64Data);
+        var byteArrays = [];
+
+        for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+            var slice = byteCharacters.slice(offset, offset + sliceSize);
+
+            var byteNumbers = new Array(slice.length);
+            for (var i = 0; i < slice.length; i++) {
+                byteNumbers[i] = slice.charCodeAt(i);
+            }
+
+            var byteArray = new Uint8Array(byteNumbers);
+
+            byteArrays.push(byteArray);
+        }
+
+        var blob = new Blob(byteArrays, { type: contentType });
+        // console.log("Blob", blob);
+        
+        return blob;
     }
 
     componentWillUnmount() {
@@ -151,16 +221,52 @@ export default class Chat extends Component {
 
         console.log(result);
 
-        if (!result.cancelled) {
-            this.socket.emit("sent-image", result.uri)
-            this.setState({
-                
-                imageHeight: result.height,
-                imageWidth: result.width
-            });
-        }
+        // if (!result.cancelled) {
+        //     var blob = null
+        //     var xhr = new XMLHttpRequest();
+        //     xhr.open("GET", result.uri);
+        //     xhr.responseType = "blob";//force the HTTP response, response-type header to be blob
+        //     xhr.onload = function () {
+        //         blob = xhr.response;//xhr.response is now a blob object
+        //         console.log("Blob Storage");
+        //         console.log(blob)
+        //         console.log(blob._data.blobId);
+
+        //     }
+        //     console.log("Blob, name", blob);
+
+        //     // this.socket.emit("sent-image",blob._data.name)
+        //     xhr.send();
+
+        this.toDataURL(result.uri, (dataUrl) => {
+            // console.log(dataUrl);
+            this.socket.emit("sent-image", dataUrl)
+            console.log("img sent done");
+
+        })
+
+
+        this.setState({
+            // image : result.uri,
+            imageHeight: result.height,
+            imageWidth: result.width
+        });
+        // }
     }
 
+    toDataURL = (url, callback) => {
+        var httpRequest = new XMLHttpRequest();
+        httpRequest.onload = function () {
+            var fileReader = new FileReader();
+            fileReader.onloadend = function () {
+                callback(fileReader.result);
+            }
+            fileReader.readAsDataURL(httpRequest.response);
+        };
+        httpRequest.open('GET', url);
+        httpRequest.responseType = 'blob';
+        httpRequest.send();
+    }
 
 
     doubleTap = () => {
@@ -182,9 +288,9 @@ export default class Chat extends Component {
         let name = navigation.getParam("name")
         users.push(name)
         // console.log("Users from render",users);
-        
-        const chatMsgs = this.state.chatMsgs.map(item => (
-            <Text key={Math.random()}>From {name}: Message: {item}</Text>
+
+        const chatMsgs = this.state.chatMsgs.map((item,i) => (
+            (item.length<100) ? <Text key={i}>From {name}: Message: {item}</Text> :  <Image source={{ uri: item }} style={{ width: 200, height: 200 }} />
         ))
 
         const messages = [
@@ -194,7 +300,7 @@ export default class Chat extends Component {
         ]
 
         // const onlineUsers = 
-       
+
 
         const bubble = messages.map((item, i) => <Messages {...item} key={i} />)
         // const spacer = Platform.OS === "ios" ? <KeyboardSpacer /> : <KeyboardSpacer />
@@ -205,7 +311,7 @@ export default class Chat extends Component {
                 <ScrollView>
                     <View >
                         <Text>Chat</Text>
-                        {/* <Text>Online Users:{name}</Text> */}
+                        <Text>Online Users:{this.state.name}</Text>
                         {
                             // users.map(item=>(
                             //     // console.log("Online USer from return",item)
@@ -213,9 +319,7 @@ export default class Chat extends Component {
                             // ))
                             // console.log("Online USers from return")
                             // onlineUsers
-                            this.state.users.map((items)=>(
-                            <Text key={Math.random()}>{items}</Text>
-                            ))
+                            this.state.users.map((items, i) => (<Text key={i}>{items}</Text>))
                         }
 
                         <Text>{this.state.typing}</Text>
@@ -224,12 +328,12 @@ export default class Chat extends Component {
 
                         {/* {num} */}
                         {chatMsgs}
-                        <Image source={{ uri: this.state.image }} style={{ width: 200, height: 200 }} />
+                        {/* <Image source={{ uri: this.state.image }} style={{ width: 200, height: 200 }} /> */}
 
                     </View>
-                    <View style={{ flex: 1 }}>
+                    {/* <View style={{ flex: 1 }}>
                         {bubble}
-                    </View>
+                    </View> */}
                 </ScrollView>
 
 
@@ -248,7 +352,7 @@ export default class Chat extends Component {
                             this.typingTimer = setTimeout(() => {
                                 if (val) {
                                     this.socket.emit("typing-stop")
-                                    window.alert('Stopped typing !');
+                                    // window.alert('Stopped typing !');
                                 }
                             }, 5000);
 

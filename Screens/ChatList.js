@@ -15,22 +15,22 @@ export default class ChatList extends Component {
     }
 
     componentDidMount() {
-        this.socket = io("http://e5c14135.ngrok.io")
+        // this.socket = io("http://e5c14135.ngrok.io")
 
-        this.socket.on("users", data => {
-            console.log("users from socket");
+    //     this.socket.on("users", data => {
+    //         console.log("users from socket");
 
-            // console.log(data);
+    //         // console.log(data);
 
-            this.setState({
-                users : [...data]
-            })
+    //         this.setState({
+    //             users : [...data]
+    //         })
 
-    console.log("state data",this.state.users);
-            // data.map(items => {
-            //     console.log(items.name);
-            // })
-        })
+    // console.log("state data",this.state.users);
+    //         // data.map(items => {
+    //         //     console.log(items.name);
+    //         // })
+    //     })
 
         
         
@@ -40,9 +40,13 @@ export default class ChatList extends Component {
 
     render() {
         const { navigation } = this.props
+        let name = navigation.getParam("name")
         return (
             <ScrollView>
-
+                <Text>
+                    {name}
+                </Text>
+                
                 {/* <ChatCardList navigation={navigation} name="Subham" profilePic='https://images.unsplash.com/photo-1581591524425-c7e0978865fc?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1500&q=80' />
                 <ChatCardList navigation={navigation} name="Ritam" profilePic='https://images.unsplash.com/photo-1581606559957-cefd05258b54?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1050&q=80' />
                 <ChatCardList navigation={navigation} name="Avantika" profilePic="https://images.unsplash.com/photo-1581606559957-cefd05258b54?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1050&q=80" />

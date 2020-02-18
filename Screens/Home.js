@@ -17,7 +17,7 @@ export default class Home extends Component {
   }
 
   componentDidMount(){
-    this.socket = io("http://3c2851ed.ngrok.io")
+    // this.socket = io("http://777518aa.ngrok.io")
 
   //   this.socket.on("get-users", data => {
   //     // data.map(item=>{
@@ -68,8 +68,10 @@ export default class Home extends Component {
                 mode="contained"
                 title="Go to Chat"
                 onPress={() => {
-                  this.socket.emit("new-user",this.state.name)
-                  this.props.navigation.navigate('Chat', { name: this.state.name })
+                  // this.socket.emit("new-user",this.state.name)
+                  console.log("from home",this.state.name);
+                  
+                  this.props.navigation.navigate('ChatList', { name: this.state.name })
                 }
                 }
               >
