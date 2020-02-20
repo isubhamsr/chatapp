@@ -6,47 +6,48 @@ import io from "socket.io-client"
 
 export default class ChatList extends Component {
 
-    constructor(props){
+    constructor(props) {
         super(props)
 
         this.state = {
-            users : []
+            users: []
         }
     }
 
     componentDidMount() {
-        // this.socket = io("http://e5c14135.ngrok.io")
+        fetch("http://7ffe8f4a.ngrok.io/users", {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "name": this.state.name
+            })
+        })
+            .then(res => res.json())
+            .then(res2 => {
+                // console.log(res2.users);
+                this.setState({
+                    users: res2.users
+                })
+            })
+            .catch(err => {
+                console.log(err.message);
 
-    //     this.socket.on("users", data => {
-    //         console.log("users from socket");
-
-    //         // console.log(data);
-
-    //         this.setState({
-    //             users : [...data]
-    //         })
-
-    // console.log("state data",this.state.users);
-    //         // data.map(items => {
-    //         //     console.log(items.name);
-    //         // })
-    //     })
-
-        
-        
-
+            })
     }
 
 
     render() {
         const { navigation } = this.props
-        let name = navigation.getParam("name")
+        // let users = navigation.getParam("users")
         return (
             <ScrollView>
                 <Text>
-                    {name}
+                    Chat list
                 </Text>
-                
+
                 {/* <ChatCardList navigation={navigation} name="Subham" profilePic='https://images.unsplash.com/photo-1581591524425-c7e0978865fc?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1500&q=80' />
                 <ChatCardList navigation={navigation} name="Ritam" profilePic='https://images.unsplash.com/photo-1581606559957-cefd05258b54?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1050&q=80' />
                 <ChatCardList navigation={navigation} name="Avantika" profilePic="https://images.unsplash.com/photo-1581606559957-cefd05258b54?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1050&q=80" />
@@ -56,7 +57,7 @@ export default class ChatList extends Component {
                 <ChatCardList navigation={navigation} name="Mainak" profilePic="https://images.unsplash.com/photo-1581609784724-68d753c36494?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=634&q=80" /> */}
 
                 {
-                    this.state.users.map((items, i)=> <ChatCardList navigation={navigation} name={items.name} userId={items.userId} profilePic={items.profilePic}/>)
+                    this.state.users.map((items, i) => <ChatCardList key={i} navigation={navigation} name={items.name} userId={items.userId} profilePic={items.profilePic} />)
                 }
 
             </ScrollView>

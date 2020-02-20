@@ -4,11 +4,14 @@ import io from "socket.io-client"
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler'
 import KeyboardSpacer from "react-native-keyboard-spacer"
 import Messages from './Messages'
-// import ImagePicker from "expo-image-picker"
 import * as ImagePicker from 'expo-image-picker';
+import { Video } from "expo-av"
+import * as MediaLibrary from 'expo-media-library';
+import { Camera } from 'expo-camera';
 import * as Permissions from 'expo-permissions';
-// const base64Img = require('base64-img');
-// const fs = require('fs')
+import MyCam from '../components/MyCam'
+
+
 
 export default class Chat extends Component {
 
@@ -26,12 +29,14 @@ export default class Chat extends Component {
             image: null,
             imageHeight: null,
             imageWidth: null,
-            users: []
+            users: [],
+            video: null,
+            showCamera: false
         }
     }
 
     componentDidMount() {
-        this.socket = io("http://76210b54.ngrok.io")
+        this.socket = io("http://7ffe8f4a.ngrok.io")
         console.log("User name", this.props.navigation.getParam("name"));
 
         this.socket.emit("new-user", this.state.name)
@@ -50,6 +55,11 @@ export default class Chat extends Component {
             // })
             // var name = msg.name
         })
+
+
+        // this.sendLastMsgToPrent
+
+
 
         this.socket.on("typingdata", data => {
             this.setState({
@@ -74,7 +84,7 @@ export default class Chat extends Component {
             console.log("Base Im", typeof (data));
             this.setState({
                 // image : data
-                chatMsgs : [...this.state.chatMsgs, data]
+                chatMsgs: [...this.state.chatMsgs, data]
             })
             // Split the base64 string in data and contentType
             // var block = data.split(";");
@@ -89,6 +99,12 @@ export default class Chat extends Component {
             // console.log("Blob", blob);
 
 
+        })
+
+        this.socket.on("base-video", (data) => {
+            this.setState({
+                video: data
+            })
         })
 
         // this.getPermissionAsync();
@@ -165,12 +181,25 @@ export default class Chat extends Component {
 
         var blob = new Blob(byteArrays, { type: contentType });
         // console.log("Blob", blob);
-        
+
         return blob;
     }
 
+    sendLastMsgToPrent = () => {
+        lastMsg = this.state.chatMsgs.length - 1
+        this.state.chatMsgs[lastMsg]
+        this.props.navigation.goBack({ lastMsg: this.state.name });
+        this.props.navigation.state.params.returnMsg(this.state.name);
+    }
+
+
     componentWillUnmount() {
         clearTimeout(this.typingTimer);
+
+        lastMsg = this.state.chatMsgs.length - 1
+        this.state.chatMsgs[lastMsg]
+        this.props.navigation.state.params.returnMsg(this.state.chatMsgs[lastMsg].length < 100 ? this.state.chatMsgs[lastMsg] : "photo");
+        this.props.navigation.goBack({ lastMsg: this.state.name });
     }
 
     sentMessage = () => {
@@ -191,7 +220,7 @@ export default class Chat extends Component {
         this.socket.emit("msg", data)
         // this.socket.emit(this.props.navigation.getParam("name"), data)
 
-        console.log(this.state.chat);
+        // console.log(this.state.chat);
 
         this.setState({
             chat: ""
@@ -269,6 +298,29 @@ export default class Chat extends Component {
     }
 
 
+    sendVideos = () => {
+        // let result = await ImagePicker.launchImageLibraryAsync({
+        //     mediaTypes: ImagePicker.MediaTypeOptions.All,
+        //     //   allowsEditing: true,
+        //     aspect: [4, 3],
+        //     quality: 1
+        // });
+
+        // console.log(result);
+
+        // this.toDataURL(result.uri, (dataUrl) => {
+        //     // console.log(dataUrl);
+        //     this.socket.emit("sent-video", dataUrl)
+        //     console.log("img sent done");
+        // })
+
+        // this.setState({
+        //     // video: result.uri,
+        //     imageHeight: result.height,
+        //     imageWidth: result.width
+        // });
+    }
+
     doubleTap = () => {
 
         let delta = new Date().getTime() - this.state.lastPress;
@@ -289,8 +341,8 @@ export default class Chat extends Component {
         users.push(name)
         // console.log("Users from render",users);
 
-        const chatMsgs = this.state.chatMsgs.map((item,i) => (
-            (item.length<100) ? <Text key={i}>From {name}: Message: {item}</Text> :  <Image source={{ uri: item }} style={{ width: 200, height: 200 }} />
+        const chatMsgs = this.state.chatMsgs.map((item, i) => (
+            (item.length < 100) ? <Text key={i}>From {name}: Message: {item}</Text> : <Image key={i} source={{ uri: item }} style={{ width: 200, height: 200 }} />
         ))
 
         const messages = [
@@ -311,7 +363,7 @@ export default class Chat extends Component {
                 <ScrollView>
                     <View >
                         <Text>Chat</Text>
-                        <Text>Online Users:{this.state.name}</Text>
+                        <Text>User : {this.state.name}</Text>
                         {
                             // users.map(item=>(
                             //     // console.log("Online USer from return",item)
@@ -328,6 +380,16 @@ export default class Chat extends Component {
 
                         {/* {num} */}
                         {chatMsgs}
+                        <Video
+                            source={{ uri: this.state.video }}
+                            rate={1.0}
+                            volume={1.0}
+                            isMuted={true}
+                            resizeMode="cover"
+                            shouldPlay
+                            isLooping
+                            style={{ width: 300, height: 300 }}
+                        />
                         {/* <Image source={{ uri: this.state.image }} style={{ width: 200, height: 200 }} /> */}
 
                     </View>
@@ -367,6 +429,10 @@ export default class Chat extends Component {
                     <TouchableOpacity>
                         <Text style={style.sendButton}
                             onPress={this.sendImage}>Send Photos</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity>
+                        <Text style={style.sendButton}
+                            onPress={() => this.props.navigation.navigate('MyCam')}>Send Videos</Text>
                     </TouchableOpacity>
 
                     {/* <Button
