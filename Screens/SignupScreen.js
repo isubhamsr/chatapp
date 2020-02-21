@@ -36,7 +36,7 @@ export default class SignupScreen extends Component {
             inicator: true
         })
 
-        fetch("http://7ffe8f4a.ngrok.io/signup", {
+        fetch("http://325a12f3.ngrok.io/signup", {
             method: 'POST',
             headers: {
                 Accept: 'application/json',

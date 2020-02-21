@@ -15,7 +15,7 @@ export default class ChatList extends Component {
     }
 
     componentDidMount() {
-        fetch("http://7ffe8f4a.ngrok.io/users", {
+        fetch("http://325a12f3.ngrok.io/users", {
             method: 'POST',
             headers: {
                 Accept: 'application/json',

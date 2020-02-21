@@ -36,7 +36,7 @@ export default class Chat extends Component {
     }
 
     componentDidMount() {
-        this.socket = io("http://7ffe8f4a.ngrok.io")
+        this.socket = io("http://325a12f3.ngrok.io")
         console.log("User name", this.props.navigation.getParam("name"));
 
         this.socket.emit("new-user", this.state.name)
@@ -57,6 +57,12 @@ export default class Chat extends Component {
         })
 
 
+        this.socket.on("sent-video", data=>{
+            console.log("from sent videos", data);
+            this.setState({
+                video : data
+            })
+        })
         // this.sendLastMsgToPrent
 
 
@@ -101,11 +107,11 @@ export default class Chat extends Component {
 
         })
 
-        this.socket.on("base-video", (data) => {
-            this.setState({
-                video: data
-            })
-        })
+        // this.socket.on("base-video", (data) => {
+        //     this.setState({
+        //         video: data
+        //     })
+        // })
 
         // this.getPermissionAsync();
 
@@ -381,7 +387,7 @@ export default class Chat extends Component {
                         {/* {num} */}
                         {chatMsgs}
                         <Video
-                            source={{ uri: this.state.video }}
+                            source={{ uri: "file:///data/user/0/host.exp.exponent/cache/ExperienceData/%2540anonymous%252FchatApp-fad2e7e8-558a-4905-bb4f-c71d77c0c1a5/Camera/13b1e28d-d66a-4913-b92f-a52df9266dec.mp4" }}
                             rate={1.0}
                             volume={1.0}
                             isMuted={true}
